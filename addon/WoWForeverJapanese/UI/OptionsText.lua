@@ -10,12 +10,44 @@ Text.T = {
   ["page.main"] = { en = "WoW Forever Japanese (日本語化)", ja = "WoW Forever Japanese (日本語化)" },
   ["page.collector"] = { en = "English Collector", ja = "英語テキスト収集" },
   ["page.about"] = { en = "About & Help", ja = "情報とヘルプ" },
+  ["page.words"] = { en = "Words", ja = "単語帳" },
   ["page.voice"] = { en = "Voice", ja = "音声" },
   ["page.voicePanel"] = { en = "Voice panel", ja = "音声パネル" },
   ["tagline"] = {
     en = "Japanese quest, NPC and tooltip text. Hold a key for the game's English.",
     ja = "クエスト・NPC・ツールチップを日本語で。キーを押している間は英語で表示します。",
   },
+
+  -- the word list (Core/Words): chat lines, the word card's hint
+  ["words.hint"] = { en = "%s: save word", ja = "%sで単語を保存" },
+  ["words.saved"] = { en = "Saved: %s (%s words)", ja = "保存しました：%s（%s語）" },
+  ["words.exists"] = { en = "Already saved: %s", ja = "保存済み：%s" },
+  ["words.refused"] = { en = "This word list was saved by a newer version of the addon and cannot be changed here.",
+    ja = "この単語帳は新しいバージョンのアドオンで保存されたため、ここでは変更できません。" },
+  ["words.moved"] = { en = "Saving a word now uses %s.", ja = "単語の保存は%sになりました。" },
+  -- the word list window (UI/WordsWindow)
+  ["words.title"] = { en = "Word list", ja = "単語帳" },
+  ["words.summary"] = { en = "%s words saved. Paste the text into a text file, a spreadsheet or Anki.",
+    ja = "%s語を保存しています。テキストファイル、表計算ソフト、Ankiに貼り付けられます。" },
+  -- %s in the word list lines: the save click as set now (Text.saveClick)
+  ["words.empty"] = { en = "No words yet. Point at a Japanese word and save it with %s.",
+    ja = "まだ単語がありません。日本語の単語にカーソルを合わせ、%sで保存します。" },
+  ["words.clickOff"] = { en = "the save click (turn it on in the Words settings)",
+    ja = "保存の操作（単語帳の設定でオンにします）" },
+  ["words.copyHint"] = {
+    en = "The text is selected: press Cmd+C (Mac) or Ctrl+C (Windows).\n"
+      .. "In Anki, make Key the first field of the note type.",
+    ja = "テキストは選択済みです。Cmd+C（Mac）またはCtrl+C（Windows）でコピーします。\nAnkiではKeyをノートタイプの最初のフィールドにしてください。",
+  },
+  ["words.removeLast"] = { en = "Remove last", ja = "最後を削除" },
+  ["words.removed"] = { en = "Removed %s.", ja = "%sを削除しました。" },
+  ["words.clear"] = { en = "Clear all", ja = "すべて削除" },
+  ["words.clearArm"] = { en = "Click again to clear", ja = "もう一度クリックで削除" },
+  ["words.cleared"] = { en = "Cleared %s words.", ja = "%s語を削除しました。" },
+  ["words.images"] = { en = "Include images (screenshots taken when saving)", ja = "画像を含める（保存時のスクリーンショット）" },
+  ["words.shotsPath"] = { en = "Your screenshots are in this folder:", ja = "スクリーンショットはこのフォルダにあります：" },
+  ["words.ankiPath"] = { en = "Copy them into Anki's media folder (Mac, then Windows; User 1 is Anki's first profile):",
+    ja = "Ankiのメディアフォルダにコピーしてください（上がMac、下がWindows。User 1はAnkiの最初のプロフィール）：" },
 
   ["section.translation"] = { en = "Translation", ja = "翻訳" },
   ["section.areas"] = { en = "What to translate", ja = "翻訳する範囲" },
@@ -27,6 +59,14 @@ Text.T = {
   ["section.collector"] = { en = "Collector", ja = "収集" },
   ["section.files"] = { en = "Sending it in", ja = "送り方" },
   ["section.help"] = { en = "How it works", ja = "使い方" },
+  ["section.words"] = { en = "Word list", ja = "単語帳" },
+  ["words.explain"] = {
+    en = "Point at a Japanese word and use the save click to keep it, with its reading, meaning and sentence.\n"
+      .. "The list stays across sessions; export it any time to a text file, a spreadsheet or Anki.",
+    ja = "日本語の単語にカーソルを合わせ、保存の操作で読み方・意味・文と一緒に保存します。\n単語帳は次回以降も残り、いつでもテキストファイル、表計算ソフト、Ankiに書き出せます。",
+  },
+  ["words.status"] = { en = "%s words saved", ja = "保存した単語：%s語" },
+  ["words.export"] = { en = "Export the word list", ja = "単語帳を書き出す" },
   ["section.slash"] = { en = "Slash commands", ja = "スラッシュコマンド" },
 
   ["toggleKey"] = { en = "Turn translation on / off", ja = "翻訳のオン・オフ切り替え" },
@@ -192,8 +232,10 @@ Text.T = {
     ja = "%sを押している間はゲーム本来の英語を表示し、離すと日本語に戻ります。",
   },
   ["about.readings"] = {
-    en = "Point at a Japanese word in a quest or NPC window to see its reading.",
-    ja = "クエストやNPCの画面で日本語の単語にカーソルを合わせると、読み方が表示されます。",
+    en = "Point at a Japanese word in a quest or NPC window to see its reading. "
+      .. "Save it to your word list with %s; /wfj words shows the list.",
+    ja = "クエストやNPCの画面で日本語の単語にカーソルを合わせると、読み方が表示されます。"
+      .. "%sで単語帳に保存でき、/wfj words で一覧を表示します。",
   },
   -- the About page's voice line (UI/Options aboutVoice); %s: the packs that loaded, in the line's language
   ["about.voice.none"] = {
@@ -318,6 +360,8 @@ Text.T = {
   ["intro.hold"] = { en = "Hold %s to see the game's English.", ja = "%sを押している間は、ゲームの英語を表示します。" },
   ["intro.readings"] = { en = "Point at a Japanese word to see its reading.",
     ja = "日本語の単語にカーソルを合わせると、読み方が出ます。" },
+  ["intro.words"] = { en = "Save a highlighted word to your word list with %s.",
+    ja = "ハイライトした単語は%sで単語帳に保存できます。" },
   ["intro.minimap"] = { en = "Minimap button: left-click to report a line, right-click for the menu.",
     ja = "ミニマップのボタン：左クリックで翻訳の報告、右クリックでメニュー。" },
   -- the voice section under both blocks, shown only while no voice pack has loaded
@@ -325,6 +369,7 @@ Text.T = {
   ["intro.voice"] = { en = "Get WoW Forever Japanese Voice free to hear the Japanese read aloud.",
     ja = "無料の「WoW Forever Japanese Voice」で、日本語を読み上げます。" },
   ["intro.close"] = { en = "Close", ja = "閉じる" },
+  ["minimap.words"] = { en = "Export words (%s)", ja = "単語帳を書き出す（%s）" },
   ["minimap.sendEnglish"] = { en = "Send collected English (%s)", ja = "集めた英語を送る（%s）" },
   ["minimap.version"] = { en = "Version %s", ja = "バージョン %s" },
   ["minimap.collected"] = { en = "The collector has %s lines we need. Right-click to send them.",
@@ -340,7 +385,7 @@ Text.SLASH = {
   "/wfj area quests off  ·  /wfj marker missing on",
   "/wfj readings [on | off]  ·  /wfj glosses [on | off]",
   "/wfj config [collector | about]  ·  /wfj fix  (report a line)",
-  "/wfj bug  (report a bug or an idea)",
+  "/wfj bug  (report a bug or an idea)  ·  /wfj words  (the saved word list)",
   "/wfj collector [on | off | status | path | clear | send [all]]",
   "/wfj log [<n>]  (the problem log)  ·  /wfj taint  (action-bar taint scan)",
   "/wfj debug [hash | quest <id> | item <id> | spell <id>]",
@@ -350,6 +395,21 @@ Text.SLASH = {
 
 -- the translation-report issue form the fix window's report is pasted into
 Text.FIX_URL = "https://github.com/zyaga/wow-forever-japanese/issues/new?template=translation-report.yml"
+
+-- The save click as set now, for the lines that name it → en, ja ("Ctrl+click" in both; a sentence when it is off).
+function Text.saveClick()
+  local c = WFJ.Settings and WFJ.Settings.get("words.saveClick") or "ctrl"
+  if c == "off" then return Text.T["words.clickOff"].en, Text.T["words.clickOff"].ja end
+  local d = WFJ.Settings and WFJ.Settings.definition("words.saveClick")
+  local label = d and d.choiceText and d.choiceText[c] or "Ctrl+click"
+  return label, label
+end
+
+-- A line naming the save click, in both languages.
+function Text.withSaveClick(key)
+  local en, ja = Text.saveClick()
+  return Text.T[key].en:format(en), Text.T[key].ja:format(ja)
+end
 
 -- → en, ja; a missing key raises (a typo must fail the spec, not ship a blank).
 function Text.get(key, ...)

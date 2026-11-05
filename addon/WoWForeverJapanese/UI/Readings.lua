@@ -162,7 +162,7 @@ local function showHover(cover, word)
   local r = word.rects[1]
   local gloss = glossFor(word)
   if gloss then
-    WFJ.ReadingPopup.show(cover, r.left + r.width / 2, r.bottom + r.height + 2, word, gloss, size)
+    WFJ.ReadingPopup.show(cover, r.left + r.width / 2, r.bottom + r.height + 2, word, gloss, size, View.hint())
     return
   end
   local b = ensureBox()
@@ -193,7 +193,8 @@ local function measure(cover)
       for _, a in ipairs(areas) do
         rects[#rects + 1] = { left = a.left, bottom = a.bottom, width = a.width, height = a.height }
       end
-      words[#words + 1] = { word = sp.word, reading = sp.reading, gloss = sp.gloss, card = sp.card, rects = rects }
+      words[#words + 1] = { word = sp.word, reading = sp.reading, gloss = sp.gloss, card = sp.card, rects = rects,
+        first = sp.first, last = sp.last }
     end
   end
   return words
@@ -219,10 +220,12 @@ local function onUpdate(cover)
   if word ~= cover.hovered then
     if word then showHover(cover, word) else clearHover(cover) end
   end
+  View.poll(cover)
 end
 
 local function onEnter(cover)
   if not View.enabled then return end
+  cover.pressWord, cover.wasDown = nil, View.buttonDown()
   cover.words = measure(cover)
   if cover.words == nil then
     -- the widget shows other text now (dropped outside Render, e.g. a pooled gossip row): this cover is stale.
@@ -236,7 +239,7 @@ end
 
 local function onLeave(cover)
   cover:SetScript("OnUpdate", nil)
-  cover.words = nil
+  cover.words, cover.pressWord = nil, nil
   clearHover(cover)
 end
 
@@ -352,11 +355,76 @@ function View.attach(rec)
   onLeave(cover)
   cover.text, cover.spans = rec.applied, spans
   cover.where = tostring(rec.meta.kind) .. " " .. tostring(rec.meta.id)
+  cover.kind, cover.id, cover.surface = rec.meta.kind, rec.meta.id, rec.surface
   cover:SetShown(View.enabled)
   View.attached = View.attached + 1
   -- a re-attach under a resting mouse (the pane redisplayed on QUEST_LOG_UPDATE) gets no new OnEnter: start again
   if View.enabled and cover.IsMouseOver and cover:IsMouseOver() then onEnter(cover) end
   return true
+end
+
+-- ── The save click (UI/WordSave, ADR-069) ────────────────────────────────
+-- The cover never takes clicks (a click-enabled frame would stand between the player and the window under the text),
+-- so the save click is read by polling the left button in the OnUpdate that already runs while the mouse is over the
+-- cover: a press that starts on a word and is released on the same word. A press that started before the mouse
+-- arrived (the end of a drag) is not a click. UI/WordSave decides whether the modifiers match and saves.
+
+local isDown -- IsMouseButtonDown, resolved once: it is read every frame while the mouse is over a cover
+function View.buttonDown()
+  isDown = isDown or Compat.resolve("IsMouseButtonDown")
+  return type(isDown) == "function" and isDown("LeftButton") == true
+end
+
+function View.poll(cover)
+  local save = WFJ.WordSave
+  if not save or save.choice() == "off" then return end
+  local down = View.buttonDown()
+  if down and not cover.wasDown then
+    cover.pressWord = cover.hovered
+    -- where the cover was at the press: a frame dragged by its text (the voice panel) moves the cover with it, and a
+    -- drag is not a click
+    cover.pressLeft, cover.pressBottom = cover:GetLeft(), cover:GetBottom()
+  elseif not down and cover.wasDown then
+    local w = cover.pressWord
+    cover.pressWord = nil
+    if w and w == cover.hovered and cover:GetLeft() == cover.pressLeft and cover:GetBottom() == cover.pressBottom then
+      save.release(cover, w)
+    end
+  end
+  cover.wasDown = down
+end
+
+-- The card's hint line (how to save a word), until the player has saved one.
+function View.hint()
+  return WFJ.WordSave and WFJ.WordSave.hint() or nil
+end
+
+-- A saved word's tint flashes once, then settles back.
+function View.flash(cover)
+  for _, t in ipairs(cover.tints) do
+    if t:IsShown() then t:SetColorTexture(TINT[1], TINT[2], TINT[3], 0.55) end
+  end
+  local after = Compat.resolve("C_Timer.After")
+  if type(after) ~= "function" then return end
+  after(0.25, function()
+    for _, t in ipairs(cover.tints) do t:SetColorTexture(TINT[1], TINT[2], TINT[3], TINT[4]) end
+  end)
+end
+
+-- Hides the reading box or the card over a cover; the tint stays (UI/WordSave's screenshot shows the word).
+function View.hideCard(cover)
+  if box and box.owner == cover then box:Hide() end
+  if WFJ.ReadingPopup then WFJ.ReadingPopup.hide(cover) end
+end
+
+-- Shows the hovered word's box or card again.
+function View.reshow(cover)
+  local w = cover.hovered
+  if w and cover.words then
+    for _, t in ipairs(cover.tints) do t:Hide() end
+    cover.hovered = nil
+    showHover(cover, w)
+  end
 end
 
 -- The setting (State event "readings"): off hides every cover at once; on shows the attached ones again.
