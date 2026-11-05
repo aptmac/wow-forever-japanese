@@ -19,7 +19,9 @@ def _recipe(makefile: str, target: str) -> list[str]:
 
 CLIENTS = {"classic-era": ("1.15.9.69722", "wago", "wow_classic_era"), "forever": ("1.60.1.70790", "db2", "wowf")}
 # The build whose quest cache was imported, when it is not the tables' build: the scan moves it, never a table pull.
-QUEST_BUILDS = {"forever": "1.60.1.70532"}
+QUEST_BUILDS: dict[str, str] = {}
+# A quest build behind the tables, for the checks that set forever_QUEST_BUILD on the command line.
+BEHIND = "1.60.1.70532"
 FOREVER_BUILD = CLIENTS["forever"][0]
 
 
@@ -36,8 +38,9 @@ def test_clients_are_pinned_oldest_first(makefile):
         assert re.search(rf"^{client}_BUILD\s*:=\s*{re.escape(build)}$", makefile, re.M), client
         assert re.search(rf"^{client}_SRC\s*:=\s*{src}$", makefile, re.M), client
         assert re.search(rf"^{client}_PRODUCT\s*:=\s*{product}$", makefile, re.M), client
-    for client, build in QUEST_BUILDS.items():
-        assert re.search(rf"^{client}_QUEST_BUILD\s*:=\s*{re.escape(build)}$", makefile, re.M), client
+    for client in CLIENTS:
+        pinned = re.search(rf"^{client}_QUEST_BUILD\s*:=\s*(\S+)$", makefile, re.M)
+        assert (pinned and pinned.group(1)) == QUEST_BUILDS.get(client), client  # no pin left behind either
 
 
 @pytest.mark.parametrize("target", ["import", "import-english"])
@@ -79,7 +82,7 @@ def test_the_served_step_names_forevers_folder(root, tmp_path, target):
     forever = f"{tmp_path}/clients/forever-{FOREVER_BUILD}/"
     for table in ("QuestV2.csv", "ItemSparse.csv", "SpellName.csv"):
         assert f'"{forever}{table}"' in out[0], table
-    assert f'"{tmp_path}/clients/forever-{QUEST_BUILDS["forever"]}/questcache.wdb"' in out[0]
+    assert f'"{tmp_path}/clients/forever-{QUEST_BUILDS.get("forever", FOREVER_BUILD)}/questcache.wdb"' in out[0]
     assert f'--map-cache "{tmp_path}/clients/classic-era-1.15.9.69722/questcache.wdb"' in out[0]
     assert "--merge" not in out[0] and "--dry-run" not in out[0]
 
@@ -109,7 +112,7 @@ def test_a_broken_second_client_stops_the_import_before_any_write(makefile, root
     assert r.returncode != 0 and "import english wdb" not in r.stdout
     r = subprocess.run(["make", "-s", "-C", str(root), "client-preflight", "CLIENT=forever", f"INPUTS={tmp_path}"],
                        capture_output=True, text=True, check=False)
-    quest = QUEST_BUILDS["forever"]
+    quest = QUEST_BUILDS.get("forever", FOREVER_BUILD)
     assert r.returncode != 0 and f"import: forever: no quest cache at {tmp_path}/clients/forever-{quest}/" in r.stdout
     for target in ("import", "import-english"):
         lines = _recipe(makefile, target)
@@ -326,7 +329,7 @@ def test_a_per_client_knob_in_the_environment_is_refused(root, tmp_path):
 
 def test_a_relative_inputs_is_made_absolute(root):
     out = "\n".join(_dry(root, "wdb-copy", "WOW_DIR=/nonexistent", "INPUTS=rel-inputs"))
-    assert f"{root}/rel-inputs/clients/forever-{QUEST_BUILDS['forever']}/questcache.wdb" in out
+    assert f"{root}/rel-inputs/clients/forever-{QUEST_BUILDS.get('forever', FOREVER_BUILD)}/questcache.wdb" in out
 
 
 def test_inputs_default_to_the_main_checkouts_folder(root):
@@ -347,5 +350,5 @@ def test_a_quest_pin_behind_the_tables_refuses_the_full_imports(root, tmp_path, 
     the newer QuestV2: it stops before anything runs."""
     one = ["CLIENT=forever"] if target == "import-client" else []
     r = subprocess.run(["make", "-s", "-C", str(root), target, *one, f"INPUTS={tmp_path}",
-                        f"forever_QUEST_BUILD={QUEST_BUILDS['forever']}"], capture_output=True, text=True, check=False)
+                        f"forever_QUEST_BUILD={BEHIND}"], capture_output=True, text=True, check=False)
     assert r.returncode == 2 and "forever_QUEST_BUILD is set" in r.stdout, r.stdout + r.stderr

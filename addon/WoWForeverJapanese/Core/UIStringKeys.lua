@@ -126,7 +126,7 @@ UIStrings.ARGS = {
   TALENT_BUTTON_TOOLTIP_RANK_FORMAT = { [1] = "text" }, TALENT_BUTTON_TOOLTIP_RANK_NO_MAX_FORMAT = { [1] = "text" },
   TALENT_BUTTON_TOOLTIP_REPLACED_BY_FORMAT = { [1] = "text" }, TALENT_FRAME_INCREASED_RANKS_TEXT = { [2] = "text" },
   TALENTS_INSPECT_FORMAT = { [1] = "text" },
-  -- the chat header's whisper target, a corpse's name, the Edit Mode "new layout" atlas, the
+  -- the chat header's whisper target, a corpse's name, the "new layout" atlas, the
   -- interact key's binding, a unit tooltip's level ("??" too) / race / class / creature type: all kept as shown;
   -- the loot opt-out's Yes / No and a settings category's names are dictionary words
   CHAT_WHISPER_SEND = { [1] = "text" }, CHAT_BN_WHISPER_SEND = { [1] = "text" }, CORPSE_TOOLTIP = { [1] = "text" },
@@ -265,8 +265,7 @@ UIStrings.ARGS = {
   RECENT_ALLY_PIN_EXPIRING_TOOLTIP = { [1] = "time" }, RAF_REWARD_TITLE = { [1] = "text" },
   REPORTING_REPORT_PLAYER = { [1] = "text" }, GM_TICKET_WAIT_TIME = { [1] = "time" },
   BN_TOAST_NEW_CLUB_INVITATION = { [1] = "text" }, TIME_PLAYED_ALERT = { [1] = "time" },
-  HUD_EDIT_MODE_RENAME_LAYOUT_DIALOG_TITLE = { [1] = "text" },
-  HUD_EDIT_MODE_DELETE_LAYOUT_DIALOG_TITLE = { [1] = "text" }, KEY_UNBOUND_ERROR = { [1] = "text" },
+  KEY_UNBOUND_ERROR = { [1] = "text" },
   PRIMARY_KEY_UNBOUND_ERROR = { [1] = "text" },
   SETTINGS_BIND_KEY_TO_COMMAND_OR_CANCEL = { [1] = "text", [2] = "text" },
   MAC_MIC_PREMISSIONS_NOTIFICATION = { [1] = "text" }, CAA_DEBUFF_SELF_ALERT_FORMAT_DEBUFF_TYPE = { [1] = "word" },

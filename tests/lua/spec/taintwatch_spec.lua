@@ -116,6 +116,73 @@ describe("UI/TaintWatch", function()
     _G.WFJ_DB = nil
   end)
 
+  it("the scan reaches a tracker block, the quest log and the map, deeper than the bars", function()
+    local block = { name = "block", id = 1 }
+    _G.ObjectiveTrackerFrame = { modules = { { usedBlocks = { QuestBlock = { [1] = block } } } } }
+    _G.QuestMapFrame = { DetailsFrame = { questID = 93949 } }
+    taint.id = { t = block, by = "WoWForeverJapanese" }
+    taint.questID = { t = _G.QuestMapFrame.DetailsFrame, by = "WoWForeverJapanese" }
+    local fields = TW.scan("slash")
+    assert.are.equal(2, fields)
+    local scan = entriesOf("taint")[1].fields
+    assert.is_truthy(scan:find("QuestMapFrame.DetailsFrame.questID", 1, true))
+    assert.is_truthy(scan:find("%.id %(WoWForeverJapanese%)"))
+    _G.ObjectiveTrackerFrame, _G.QuestMapFrame = nil, nil
+  end)
+
+  it("the scan reaches the quest list's pooled rows, also when the map reached the list first", function()
+    local row = { questID = 93949 }
+    local pool = { EnumerateActive = function() return pairs({ [row] = true }) end } -- the pools' proxy: methods only
+    _G.QuestScrollFrame = { Contents = {}, titleFramePool = pool }
+    _G.QuestMapFrame = { QuestsFrame = { ScrollFrame = _G.QuestScrollFrame } }
+    taint.layoutIndex = { t = row, by = "WoWForeverJapanese" }
+    row.layoutIndex = 1
+    local fields = TW.scan("slash")
+    assert.are.equal(1, fields)
+    local scan = entriesOf("taint")[1].fields
+    assert.is_truthy(scan:find("QuestScrollFrame.titleFramePool[93949].layoutIndex", 1, true))
+    _G.QuestScrollFrame, _G.QuestMapFrame = nil, nil
+  end)
+
+  it("a quest shown in the quest log logs who wrote its id when that came out tainted", function()
+    local hooks = {}
+    _G.hooksecurefunc = function(t, fn) -- the global form: (name, hook)
+      if type(t) == "string" then hooks[t] = fn end
+    end
+    _G.C_Timer = { NewTicker = function() end }
+    _G.QuestMapFrame_ShowQuestDetails = function() end
+    _G.QuestMapFrame = { DetailsFrame = { questID = 5 } }
+    TW.init()
+    assert.is_function(hooks.QuestMapFrame_ShowQuestDetails)
+    hooks.QuestMapFrame_ShowQuestDetails(5)
+    assert.are.equal(0, #entriesOf("write"))
+    taint.questID = { t = _G.QuestMapFrame.DetailsFrame, by = "WoWForeverJapanese" }
+    hooks.QuestMapFrame_ShowQuestDetails(5)
+    assert.is_truthy(entriesOf("write")[1].msg:find("^QuestMapFrame%.DetailsFrame%.questID"))
+    _G.QuestMapFrame_ShowQuestDetails, _G.QuestMapFrame = nil, nil
+  end)
+
+  it("a clicked quest block logs which of its own keys and its module's read as tainted", function()
+    local hooked = {}
+    _G.hooksecurefunc = function(t, m, fn)
+      if type(t) == "table" then hooked[(t.name or "?") .. ":" .. m] = fn end
+    end
+    _G.C_Timer = { NewTicker = function() end }
+    _G.ObjectiveTrackerFrame = { name = "ObjectiveTrackerFrame", UpdateTopPadding = function() end,
+      MarkDirty = function() end }
+    _G.QuestObjectiveTracker = { name = "QuestObjectiveTracker", OnBlockHeaderClick = function() end }
+    TW.init()
+    local click = hooked["QuestObjectiveTracker:OnBlockHeaderClick"]
+    assert.is_function(click)
+    local block = { id = 93949, OnHeaderClick = function() end, parentModule = _G.QuestObjectiveTracker }
+    click(_G.QuestObjectiveTracker, block)
+    assert.are.equal(0, #entriesOf("write"))
+    taint.OnHeaderClick = { t = block, by = "WoWForeverJapanese" }
+    click(_G.QuestObjectiveTracker, block)
+    assert.is_truthy(entriesOf("write")[1].msg:find("^QuestObjectiveTracker block%.OnHeaderClick"))
+    _G.ObjectiveTrackerFrame, _G.QuestObjectiveTracker = nil, nil
+  end)
+
   it("a block in combat queues its scan until combat is over", function()
     local fighting = true
     _G.InCombatLockdown = function() return fighting end
@@ -140,5 +207,30 @@ describe("UI/TaintWatch", function()
     assert.is_truthy(table.concat(hooked, " "):find("ClearOnBarHighlightMarks", 1, true))
     assert.is_false(TW.init()) -- once
     _G.ClearOnBarHighlightMarks = nil
+  end)
+
+  it("a tracker MarkDirty called by tainted code logs its caller's stack; a clean one logs nothing", function()
+    local hooks = {}
+    _G.hooksecurefunc = function(t, m, fn)
+      if type(t) == "table" then
+        local orig = t[m]
+        t[m] = function(...) orig(...); fn(...) end
+        hooks[#hooks + 1] = (t.name or "?") .. ":" .. m
+      end
+    end
+    _G.C_Timer = { NewTicker = function() end }
+    _G.ObjectiveTrackerFrame = { name = "ObjectiveTrackerFrame", UpdateTopPadding = function() end,
+      MarkDirty = function(self) self.dirty = true end }
+    TW.init()
+    assert.is_truthy(table.concat(hooks, " "):find("ObjectiveTrackerFrame:MarkDirty", 1, true))
+    _G.ObjectiveTrackerFrame:MarkDirty()
+    assert.are.equal(0, #entriesOf("write"))
+    taint.dirty = { t = _G.ObjectiveTrackerFrame, by = "WoWForeverJapanese" }
+    _G.ObjectiveTrackerFrame:MarkDirty()
+    local w = entriesOf("write")
+    assert.are.equal(1, #w)
+    assert.is_truthy(w[1].msg:find("^ObjectiveTrackerFrame%.dirty"))
+    assert.is_truthy(w[1].stack:find("Blizzard_X", 1, true))
+    _G.ObjectiveTrackerFrame = nil
   end)
 end)

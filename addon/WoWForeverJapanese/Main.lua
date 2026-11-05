@@ -372,7 +372,7 @@ function WFJ.OnLoad()
     "Macro", "SpellSearch", "TimeManager", "CombatText", "CooldownViewer", "DamageMeter", "DeathRecap",
     "GamepadEdit", "Gamepad", "HudLabels", "HudTips", "Minimap", "PvPMatch", "QueueStatus", "RaidManager", "UnitFrames",
     "GroupFinder", "Channels", "QuickJoin", "RecentAllies", "RecruitAFriend", "ReportFrame", "HelpFrame",
-    "StatusNotices", "BNetToast", "SettingsPanel", "SettingsTutorials", "EditMode", "QuickKeybind", "ColorPicker",
+    "StatusNotices", "BNetToast", "SettingsPanel", "SettingsTutorials", "QuickKeybind", "ColorPicker",
     "ChatConfig", "TextToSpeech", "ChatTabs", "CombatLog", "AddonList", "ScriptErrors", "Splash", "EventTrace",
     "ChromieTime", "Alerts", "Errors", "ChatSystem", "ChatInput", "BossBanner", "Cinematic", "Subtitles",
     "CoinPickup", "CombatFeedback", "EquipmentFlyout",
@@ -415,7 +415,7 @@ function WFJ.OnLoad()
   step("speech", function() WFJ.Speech.init({ key = gossipKey, expand = expand }) end) -- NPC speech
   -- menu entries (Menu.ModifyMenu per tag) and HelpTip callouts, for every window above
   step("menus", WFJ.Menus.init)
-  step("menus.untagged", WFJ.MenusUntagged.init) -- the Options and Edit Mode dropdowns (no tag)
+  step("menus.untagged", WFJ.MenusUntagged.init) -- the Options dropdowns and untagged context menus
   step("helptips", WFJ.HelpTips.init)
   step("scan", WFJ.Scan.init) -- /wfj debug ui scan
   step("slash", WFJ.Slash.register)
